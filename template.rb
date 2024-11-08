@@ -59,42 +59,44 @@ with_log['fetching remote templates'] do
 end
 
 with_log['installing gems'] do
+  def add_gem_if_needed(gem_name, version=nil)
+    gem gem_name, version unless Bundler.locked_gems.dependencies[gem_name]
+  end
+
   unless Bundler.locked_gems.dependencies['solidus_auth_devise']
     bundle_command 'add solidus_auth_devise'
     generate 'solidus:auth:install'
   end
 
-  gem 'responders'
-  gem 'canonical-rails'
-  gem 'solidus_support'
-  gem 'truncate_html'
-  gem 'view_component', '~> 3.0'
-  gem 'tailwindcss-rails'
+  add_gem_if_needed 'responders'
+  add_gem_if_needed 'canonical-rails'
+  add_gem_if_needed 'solidus_support'
+  add_gem_if_needed 'truncate_html'
+  add_gem_if_needed 'view_component', '~> 3.0'
+  add_gem_if_needed 'tailwindcss-rails'
 
   gem_group :test do
     # We need to add capybara along with a javascript driver to support the provided system specs.
     # `rails new` will add the following gems for system tests unless `--skip-test` is provided.
-    # We want to stick with them but we can't be sure about how the app was generated, so we'll
-    # add them only if they're not already in the Gemfile.
-    gem "capybara" unless Bundler.locked_gems.dependencies['capybara']
-    gem "selenium-webdriver" unless Bundler.locked_gems.dependencies['selenium-webdriver']
+    add_gem_if_needed "capybara"
+    add_gem_if_needed "selenium-webdriver"
 
-    gem 'capybara-screenshot', '~> 1.0'
-    gem 'database_cleaner', '~> 2.0'
+    add_gem_if_needed 'capybara-screenshot', '~> 1.0'
+    add_gem_if_needed 'database_cleaner', '~> 2.0'
   end
 
   gem_group :development, :test do
-    gem 'rspec-rails'
-    gem 'rails-controller-testing', '~> 1.0.5'
-    gem 'rspec-activemodel-mocks', '~> 1.1.0'
+    add_gem_if_needed 'rspec-rails'
+    add_gem_if_needed 'rails-controller-testing', '~> 1.0.5'
+    add_gem_if_needed 'rspec-activemodel-mocks', '~> 1.1.0'
 
-    gem 'factory_bot', '>= 4.8'
-    gem 'factory_bot_rails'
-    gem 'ffaker', '~> 2.13'
-    gem 'rubocop', '~> 1.0'
-    gem 'rubocop-performance', '~> 1.5'
-    gem 'rubocop-rails', '~> 2.3'
-    gem 'rubocop-rspec', '~> 2.0'
+    add_gem_if_needed 'factory_bot', '>= 4.8'
+    add_gem_if_needed 'factory_bot_rails'
+    add_gem_if_needed 'ffaker', '~> 2.13'
+    add_gem_if_needed 'rubocop', '~> 1.0'
+    add_gem_if_needed 'rubocop-performance', '~> 1.5'
+    add_gem_if_needed 'rubocop-rails', '~> 2.3'
+    add_gem_if_needed 'rubocop-rspec', '~> 2.0'
   end
 
   run_bundle
