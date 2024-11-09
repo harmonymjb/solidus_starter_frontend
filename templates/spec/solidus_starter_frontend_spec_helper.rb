@@ -2,15 +2,9 @@
 
 require 'rails_helper'
 
-require 'rails-controller-testing'
-require 'rspec/active_model/mocks'
-
 require "view_component/test_helpers"
 
 require 'rspec/rails'
-require 'database_cleaner'
-require 'factory_bot'
-require 'ffaker'
 
 require 'spree/testing_support/authorization_helpers'
 require 'spree/testing_support/url_helpers'
@@ -45,10 +39,8 @@ RSpec.configure do |config|
   config.include Spree::TestingSupport::UrlHelpers
   config.include Spree::TestingSupport::Preferences
   config.include Spree::TestingSupport::Translations
-  config.include Devise::Test::ControllerHelpers, type: :controller
   config.include Devise::Test::IntegrationHelpers, type: :request
   config.include ViewComponent::TestHelpers, type: :component
-  config.include Capybara::RSpecMatchers, type: :component
   config.include ActiveJob::TestHelper
 
   config.before do
@@ -63,12 +55,6 @@ RSpec.configure do |config|
 
       #{e.message}
     WARN
-  end
-
-  # We currently have examples wherein we mock or stub method that do not exist on
-  # the real objects.
-  config.mock_with :rspec do |mocks|
-    mocks.verify_partial_doubles = false
   end
 
   config.before(:each, with_signed_in_user: true) do

@@ -63,40 +63,19 @@ with_log['installing gems'] do
     gem gem_name, version unless Bundler.locked_gems.dependencies[gem_name]
   end
 
-  unless Bundler.locked_gems.dependencies['solidus_auth_devise']
-    bundle_command 'add solidus_auth_devise'
-    generate 'solidus:auth:install'
-  end
-
-  add_gem_if_needed 'responders'
   add_gem_if_needed 'canonical-rails'
   add_gem_if_needed 'solidus_support'
   add_gem_if_needed 'truncate_html'
-  add_gem_if_needed 'view_component', '~> 3.0'
   add_gem_if_needed 'tailwindcss-rails'
+  add_gem_if_needed 'view_component'
 
   gem_group :test do
-    # We need to add capybara along with a javascript driver to support the provided system specs.
-    # `rails new` will add the following gems for system tests unless `--skip-test` is provided.
-    add_gem_if_needed "capybara"
-    add_gem_if_needed "selenium-webdriver"
-
-    add_gem_if_needed 'capybara-screenshot', '~> 1.0'
-    add_gem_if_needed 'database_cleaner', '~> 2.0'
   end
 
   gem_group :development, :test do
     add_gem_if_needed 'rspec-rails'
-    add_gem_if_needed 'rails-controller-testing', '~> 1.0.5'
-    add_gem_if_needed 'rspec-activemodel-mocks', '~> 1.1.0'
-
-    add_gem_if_needed 'factory_bot', '>= 4.8'
+    add_gem_if_needed 'factory_bot'
     add_gem_if_needed 'factory_bot_rails'
-    add_gem_if_needed 'ffaker', '~> 2.13'
-    add_gem_if_needed 'rubocop', '~> 1.0'
-    add_gem_if_needed 'rubocop-performance', '~> 1.5'
-    add_gem_if_needed 'rubocop-rails', '~> 2.3'
-    add_gem_if_needed 'rubocop-rspec', '~> 2.0'
   end
 
   run_bundle
@@ -105,13 +84,18 @@ end
 with_log['installing files'] do
   directory 'app', 'app', verbose: auto_accept, force: auto_accept
   directory 'public', 'public'
+  directory 'spec', verbose: false
 
+  # In CI, the Rails environment is test. In that Rails environment,
+  # `Solidus::InstallGenerator#setup_assets` adds `solidus_frontend` assets to
+  # vendor. We'd want to forcefully replace those `solidus_frontend` assets with
+  # SolidusStarterFrontend assets in CI.
+  directory 'vendor', verbose: false, force: Rails.env.test?
+
+  
   copy_file 'config/initializers/solidus_auth_devise_unauthorized_redirect.rb'
   copy_file 'config/initializers/canonical_rails.rb'
   copy_file 'config/routes/storefront.rb'
-  copy_file 'config/tailwind.config.js'
-  create_file 'app/assets/builds/tailwind.css'
-  rake 'tailwindcss:install'
 
   insert_into_file 'config/environments/test.rb', "\n  config.assets.css_compressor = nil\n", after: 'config.active_support.disallowed_deprecation_warnings = []'
 
@@ -123,37 +107,8 @@ with_log['installing files'] do
   RUBY
 
   application <<~RUBY
-    if defined?(FactoryBotRails)
-      initializer after: "factory_bot.set_factory_paths" do
-        require 'spree/testing_support/factory_bot'
-
-        # The paths for Solidus' core factories.
-        solidus_paths = Spree::TestingSupport::FactoryBot.definition_file_paths
-
-        # Optional: Any factories you want to require from extensions.
-        extension_paths = [
-          # MySolidusExtension::Engine.root.join("lib/my_solidus_extension/testing_support/factories"),
-          # or individually:
-          # MySolidusExtension::Engine.root.join("lib/my_solidus_extension/testing_support/factories/resource.rb"),
-        ]
-
-        # Your application's own factories.
-        app_paths = [
-          Rails.root.join('spec/factories'),
-        ]
-
-        FactoryBot.definition_file_paths = solidus_paths + extension_paths + app_paths
-      end
-    end
   RUBY
 
-  directory 'spec', verbose: false
-
-  # In CI, the Rails environment is test. In that Rails environment,
-  # `Solidus::InstallGenerator#setup_assets` adds `solidus_frontend` assets to
-  # vendor. We'd want to forcefully replace those `solidus_frontend` assets with
-  # SolidusStarterFrontend assets in CI.
-  directory 'vendor', verbose: false, force: Rails.env.test?
 end
 
 with_log['installing routes'] do

@@ -7,7 +7,3 @@
 // https://github.com/solidusio/solidus/blob/main/core/lib/generators/solidus/install/install_generator.rb
 //= require spree/frontend/all
 
-//= require utils
-//= require checkout
-//= require product
-//= require product_selection_component
